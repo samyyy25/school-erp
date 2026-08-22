@@ -16,7 +16,7 @@ model User {
   name          String
   email         String         @unique
   password      String
-  role          String         @default("STUDENT") // ADMIN | STAFF | STUDENT
+  role          String       
   phone         String?
   avatarUrl     String?
   isActive      Boolean        @default(true)
@@ -301,4 +301,15 @@ model PasswordResetToken {
 
   @@index([email])
   @@index([token])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // "user" | "model"
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([userId, createdAt])
 }

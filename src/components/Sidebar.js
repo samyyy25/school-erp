@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 const ICONS = {
   dashboard: "▦",
@@ -51,19 +52,10 @@ const NAV_BY_ROLE = {
   ],
 };
 
-export default function Sidebar({ role }) {
-  const pathname = usePathname();
+function NavItems({ role, pathname, onNavigate }) {
   const items = NAV_BY_ROLE[role] || [];
-
   return (
-    <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 border-r border-gray-100 h-screen sticky top-0 px-5 py-6">
-      <Link href={`/${role}/dashboard`} className="flex items-center gap-2 mb-8 px-1">
-        <div className="h-8 w-8 rounded-lg bg-[#111214] flex items-center justify-center text-white text-sm font-bold">
-          S
-        </div>
-        <span className="text-lg font-semibold">Scholarly</span>
-      </Link>
-
+    <>
       <p className="text-xs font-medium text-gray-400 px-1 mb-2">Main Menu</p>
       <nav className="flex-1 space-y-1">
         {items.map((item) => {
@@ -72,6 +64,7 @@ export default function Sidebar({ role }) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
                 active
                   ? "bg-[#111214] text-white font-medium"
@@ -87,11 +80,112 @@ export default function Sidebar({ role }) {
 
       <button
         onClick={() => signOut({ callbackUrl: "/login" })}
-        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-500 hover:bg-gray-50 mt-4"
+        className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-gray-500 hover:bg-gray-50 mt-4 w-full text-left"
       >
         <span aria-hidden>↩</span>
         Sign Out
       </button>
-    </aside>
+    </>
+  );
+}
+
+export default function Sidebar({ role }) {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  return (
+    <>
+      {/* ── Mobile Header Bar ── */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14 bg-white border-b border-gray-100 shadow-sm">
+        <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-[#111214] flex items-center justify-center text-white text-sm font-bold">
+            S
+          </div>
+          <span className="text-base font-semibold">Scholarly</span>
+        </Link>
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+        >
+          {/* Hamburger icon */}
+          <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      {/* ── Mobile Drawer Overlay ── */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-50 flex"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer panel */}
+          <div className="relative z-10 flex flex-col w-72 max-w-[85vw] bg-white h-full px-5 py-6 shadow-2xl">
+            {/* Drawer header */}
+            <div className="flex items-center justify-between mb-8">
+              <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-[#111214] flex items-center justify-center text-white text-sm font-bold">
+                  S
+                </div>
+                <span className="text-lg font-semibold">Scholarly</span>
+              </Link>
+              <button
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close menu"
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <NavItems
+              role={role}
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Desktop Sidebar (unchanged) ── */}
+      <aside className="hidden lg:flex lg:flex-col w-64 shrink-0 border-r border-gray-100 h-screen sticky top-0 px-5 py-6">
+        <Link href={`/${role}/dashboard`} className="flex items-center gap-2 mb-8 px-1">
+          <div className="h-8 w-8 rounded-lg bg-[#111214] flex items-center justify-center text-white text-sm font-bold">
+            S
+          </div>
+          <span className="text-lg font-semibold">Scholarly</span>
+        </Link>
+
+        <NavItems role={role} pathname={pathname} onNavigate={() => {}} />
+      </aside>
+    </>
   );
 }

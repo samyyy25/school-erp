@@ -5,7 +5,17 @@ import prisma from "@/lib/prisma";
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { name, email, password, role = "STUDENT", phone, admissionNo, employeeId } = body;
+    const {
+      name,
+      email,
+      password,
+      role = "STUDENT",
+      phone,
+      admissionNo,
+      employeeId,
+      classId,
+      sectionId,
+    } = body;
 
     // Validation
     if (!name || !email || !password) {
@@ -59,9 +69,46 @@ export async function POST(req) {
 
     if (targetRole === "STUDENT") {
       const generatedAdm = admissionNo || `STU-${Date.now().toString().slice(-6)}`;
+
+      if (!classId || !sectionId) {
+        return NextResponse.json(
+          { message: "Class and section are required for student registration" },
+          { status: 400 }
+        );
+      }
+
+      // Verify class exists
+      const schoolClass = await prisma.schoolClass.findUnique({
+        where: { id: classId },
+      });
+
+      if (!schoolClass) {
+        return NextResponse.json(
+          { message: "Selected class does not exist" },
+          { status: 400 }
+        );
+      }
+
+      // Verify section exists and belongs to selected class
+      const section = await prisma.section.findFirst({
+        where: {
+          id: sectionId,
+          classId: classId,
+        },
+      });
+
+      if (!section) {
+        return NextResponse.json(
+          { message: "Selected section does not belong to the selected class" },
+          { status: 400 }
+        );
+      }
+
       userData.student = {
         create: {
           admissionNo: generatedAdm,
+          classId,
+          sectionId,
         },
       };
     } else if (targetRole === "STAFF") {

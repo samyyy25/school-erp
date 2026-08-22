@@ -3,20 +3,35 @@ import prisma from "@/lib/prisma";
 import { requireRole } from "@/lib/guard";
 
 export async function GET() {
-  const { error } = await requireRole(["ADMIN", "STAFF", "STUDENT"]);
-  if (error) return error;
+  try {
+    const classes = await prisma.schoolClass.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        sections: {
+          select: {
+            id: true,
+            name: true,
+          },
+          orderBy: {
+            name: "asc",
+          },
+        },
+      },
+    });
 
-  const classes = await prisma.schoolClass.findMany({
-    include: {
-      sections: { include: { _count: { select: { students: true } } } },
-      subjects: true,
-      _count: { select: { subjects: true } },
-    },
-    orderBy: { name: "asc" },
-  });
+    return NextResponse.json(classes);
+  } catch (error) {
+    console.error("Failed to fetch classes:", error);
 
-  return NextResponse.json(classes);
+    return NextResponse.json(
+      { message: "Failed to load classes" },
+      { status: 500 }
+    );
+  }
 }
+
 
 export async function POST(req) {
   const { error } = await requireRole(["ADMIN"]);
