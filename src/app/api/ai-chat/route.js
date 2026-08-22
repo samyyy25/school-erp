@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
@@ -8,8 +8,8 @@ const prisma = new PrismaClient();
 // OpenRouter endpoint — mirrors Gemini/GPT/Claude via a reliable proxy.
 // Free tier available at https://openrouter.ai (sign up, no credit card needed for free models)
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1/chat/completions";
-// Using google/gemini-flash-1.5 on OpenRouter (free tier model)
-const MODEL = "google/gemini-flash-1.5";
+// Using openrouter/free which automatically routes to available free-tier models (Gemini, Llama, Nemotron, etc.)
+const MODEL = "openrouter/free";
 
 // ─── Role-specific DB context fetchers ────────────────────────────────────
 
